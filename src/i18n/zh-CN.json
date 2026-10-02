@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "title": "交易大厅",
+    "description": "加密货币现货行情：K线、订单簿与最新成交"
+  },
+  "common": {
+    "loading": "加载中...",
+    "retry": "重试",
+    "language": "语言"
+  },
+  "trade": {
+    "chart": "K线",
+    "orderBook": "订单簿",
+    "recentTrades": "最新成交",
+    "position": "仓位",
+    "openOrders": "当前订单",
+    "orders": "订单",
+    "bids": "买盘",
+    "asks": "卖盘",
+    "price": "价格",
+    "size": "数量",
+    "time": "时间",
+    "noTrades": "暂无成交",
+    "spread": "价差",
+    "orderBookStale": "订单簿更新已暂停",
+    "total": "总计",
+    "volume": "成交量",
+    "timeframe": "周期",
+    "timeframes": {
+      "1m": "1分钟",
+      "3m": "3分钟",
+      "15m": "15分钟",
+      "30m": "30分钟",
+      "1H": "1小时",
+      "2H": "2小时",
+      "4H": "4小时",
+      "6H": "6小时",
+      "8H": "8小时",
+      "12H": "12小时",
+      "1D": "1天",
+      "1W": "1周"
+    },
+    "comingSoon": "即将推出"
+  },
+  "chart": {
+    "attribution": "图表由 TradingView Lightweight Charts™ 提供，版权所有 (c) 2026 TradingView, Inc."
+  },
+  "errors": {
+    "connectionLost": "连接已断开",
+    "reconnecting": "正在重新连接...",
+    "unableToLoad": "无法加载行情数据",
+    "invalidSymbol": "无效的交易对"
+  }
+}

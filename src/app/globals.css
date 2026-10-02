@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/*
+ * Trading hall theme.
+ *
+ * Deliberately dark-only: this is a data-dense market view, and a light
+ * variant is a separate design decision rather than an automatic inversion.
+ * Every colour is a token so a light theme can be added later by redefining
+ * the block below, without touching component markup.
+ */
+
+:root {
+  --th-background: #0b0e11;
+  --th-panel: #12161c;
+  --th-panel-hover: #1a2029;
+  --th-border-subtle: #1e252e;
+
+  --th-foreground: #eaecef;
+  --th-text-secondary: #a7b1bc;
+  --th-text-muted: #6b7683;
+
+  --th-accent: #f0b90b;
+  --th-accent-subtle: #2b2413;
+
+  /* Direction colours, used for both book sides and trade prints. */
+  --th-up: #0ecb81;
+  --th-down: #f6465d;
+}
+
+@theme inline {
+  --color-background: var(--th-background);
+  --color-foreground: var(--th-foreground);
+  --color-panel: var(--th-panel);
+  --color-panel-hover: var(--th-panel-hover);
+  --color-border-subtle: var(--th-border-subtle);
+  --color-text-secondary: var(--th-text-secondary);
+  --color-text-muted: var(--th-text-muted);
+  --color-accent: var(--th-accent);
+  --color-accent-subtle: var(--th-accent-subtle);
+  --color-up: var(--th-up);
+  --color-down: var(--th-down);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--th-background);
+  color: var(--th-foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/*
+ * Numeric columns must not shuffle between updates, so tabular figures are the
+ * default in any element marked as market data.
+ */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

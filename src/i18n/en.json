@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "title": "Trading Hall",
+    "description": "Crypto spot market data: chart, order book and recent trades"
+  },
+  "common": {
+    "loading": "Loading...",
+    "retry": "Retry",
+    "language": "Language"
+  },
+  "trade": {
+    "chart": "Chart",
+    "orderBook": "Order Book",
+    "recentTrades": "Recent Trades",
+    "position": "Position",
+    "openOrders": "Open Orders",
+    "orders": "Orders",
+    "bids": "Bids",
+    "asks": "Asks",
+    "price": "Price",
+    "size": "Size",
+    "time": "Time",
+    "noTrades": "No trades yet",
+    "spread": "Spread",
+    "orderBookStale": "Order book updates paused",
+    "total": "Total",
+    "volume": "Volume",
+    "timeframe": "Timeframe",
+    "timeframes": {
+      "1m": "1 minute",
+      "3m": "3 minutes",
+      "15m": "15 minutes",
+      "30m": "30 minutes",
+      "1H": "1 hour",
+      "2H": "2 hours",
+      "4H": "4 hours",
+      "6H": "6 hours",
+      "8H": "8 hours",
+      "12H": "12 hours",
+      "1D": "1 day",
+      "1W": "1 week"
+    },
+    "comingSoon": "Coming Soon"
+  },
+  "chart": {
+    "attribution": "Charting by TradingView Lightweight Charts™, Copyright (c) 2026 TradingView, Inc."
+  },
+  "errors": {
+    "connectionLost": "Connection lost",
+    "reconnecting": "Reconnecting...",
+    "unableToLoad": "Unable to load market data",
+    "invalidSymbol": "Invalid trading pair"
+  }
+}
