@@ -17,9 +17,7 @@
 
 import {
   CandlestickSeries,
-  CrosshairMode,
   HistogramSeries,
-  LineStyle,
   createChart,
   type IChartApi,
   type ISeriesApi,
@@ -30,10 +28,18 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Spinner } from '@/components/common/Spinner';
 import { PanelNotice } from '@/components/trading/PanelNotice';
 import { canRetry, describeFailure } from '@/components/trading/failure';
-import { CHART_COLORS, CHART_LAYOUT, CHART_VOLUME_COLORS } from '@/config/chart';
+import {
+  CHART_LAYOUT,
+  CHART_PALETTES,
+  candleOptions,
+  chartOptions,
+  type ChartPalette,
+} from '@/config/chart';
 import { useMarketKlines } from '@/hooks/useMarketKlines';
 import { useSymbolInfo } from '@/hooks/useSymbolInfo';
+import { useTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/i18n/I18nProvider';
+import { getTheme } from '@/lib/theme/theme';
 import { pricePrecisionOf, sizePrecisionOf } from '@/lib/market-data/symbol';
 import { ConnectionState, type Candle, type Symbol, type Timeframe } from '@/lib/market-data/types';
 
@@ -47,6 +53,7 @@ const VOLUME_PANE_INDEX = 1;
 
 export function TradingChart({ symbol, timeframe }: TradingChartProps) {
   const t = useTranslation();
+  const theme = useTheme();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -65,6 +72,11 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
     const volumeSeries = volumeSeriesRef.current;
     if (!candleSeries || !volumeSeries) return;
 
+    // The bar's colour is baked into the point, so this needs the palette too.
+    // Re-creating the callback on a theme change is free: the hook holds it in
+    // a ref, so no subscription is opened by the new identity.
+    const palette = CHART_PALETTES[theme];
+
     const lastBarTime = lastBarTimeRef.current;
     // A bar older than the newest one on the series belongs to a previous
     // subscription that has not finished tearing down. Feeding it to `update`
@@ -78,9 +90,9 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
       low: candle.low,
       close: candle.close,
     });
-    volumeSeries.update(toVolumePoint(candle));
+    volumeSeries.update(toVolumePoint(candle, palette));
     lastBarTimeRef.current = candle.time;
-  }, []);
+  }, [theme]);
 
   const { status, error, connection, history, refresh } = useMarketKlines({
     symbol,
@@ -91,62 +103,27 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
   const symbolInfo = useSymbolInfo(symbol);
 
   // Chart and series lifetime. Created once; the pair and interval are applied
-  // to the existing series by the data effect rather than by rebuilding it.
+  // to the existing series by the data effect rather than by rebuilding it,
+  // and the theme by the effect below rather than by re-running this one —
+  // rebuilding would throw away the user's zoom along with the canvas.
+  //
+  // The theme is read from the document rather than taken from the hook, which
+  // is why this effect can keep an empty dependency list. On the first render
+  // the two agree anyway: the boot script has already run, so the attribute is
+  // the answer the hook would give.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    const palette = CHART_PALETTES[getTheme()];
+
     const chart = createChart(container, {
       width: container.clientWidth,
       height: container.clientHeight,
-      layout: {
-        background: { color: CHART_COLORS.background },
-        textColor: CHART_COLORS.text,
-        // Required by the charting library's licence: the logo links back to
-        // its vendor, which satisfies the attribution link requirement.
-        attributionLogo: true,
-      },
-      grid: {
-        vertLines: { color: CHART_COLORS.grid },
-        horzLines: { color: CHART_COLORS.grid },
-      },
-      rightPriceScale: {
-        borderColor: CHART_COLORS.border,
-      },
-      timeScale: {
-        borderColor: CHART_COLORS.border,
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: {
-          color: CHART_COLORS.crosshair,
-          width: 1,
-          style: LineStyle.Dashed,
-          labelBackgroundColor: CHART_COLORS.border,
-        },
-        horzLine: {
-          color: CHART_COLORS.crosshair,
-          width: 1,
-          style: LineStyle.Dashed,
-          labelBackgroundColor: CHART_COLORS.border,
-        },
-      },
+      ...chartOptions(palette),
     });
 
-    const candleSeries = chart.addSeries(
-      CandlestickSeries,
-      {
-        upColor: CHART_COLORS.up,
-        downColor: CHART_COLORS.down,
-        borderUpColor: CHART_COLORS.up,
-        borderDownColor: CHART_COLORS.down,
-        wickUpColor: CHART_COLORS.up,
-        wickDownColor: CHART_COLORS.down,
-      },
-      0,
-    );
+    const candleSeries = chart.addSeries(CandlestickSeries, candleOptions(palette), 0);
 
     // Volume gets its own pane so it cannot overlap the price scale.
     chart.addPane();
@@ -186,6 +163,20 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
     };
   }, []);
 
+  // Re-theming, in place. Only the chart and the candles are handled here: the
+  // volume histogram carries its colour per data point rather than as a series
+  // option, so it cannot be repainted from this side and is left to the data
+  // effect, which re-sends the bars.
+  useEffect(() => {
+    const chart = chartRef.current;
+    const candleSeries = candleSeriesRef.current;
+    if (!chart || !candleSeries) return;
+
+    const palette = CHART_PALETTES[theme];
+    chart.applyOptions(chartOptions(palette));
+    candleSeries.applyOptions(candleOptions(palette));
+  }, [theme]);
+
   // Data. `setData` here is the only wholesale replacement; live bars take the
   // incremental path above.
   useEffect(() => {
@@ -209,6 +200,8 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
     // viewport the user was reading.
     const previousRange = isSameSeries ? chart.timeScale().getVisibleLogicalRange() : null;
 
+    const palette = CHART_PALETTES[theme];
+
     candleSeries.setData(
       history.map((candle) => ({
         time: candle.time as UTCTimestamp,
@@ -218,7 +211,12 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
         close: candle.close,
       })),
     );
-    volumeSeries.setData(history.map(toVolumePoint));
+    // Re-sent on a theme change as well as on a data change, because the
+    // colour is part of each point. That costs one redundant pass over the
+    // bars on a click, and it keeps the zoom: the range captured above is
+    // restored below exactly as it is for a backfill. Passed through an arrow
+    // rather than by name — `map` would hand the palette the array index.
+    volumeSeries.setData(history.map((candle) => toVolumePoint(candle, palette)));
 
     const newest = history.at(-1);
     lastBarTimeRef.current = newest ? newest.time : null;
@@ -229,7 +227,7 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
     } else {
       chart.timeScale().fitContent();
     }
-  }, [history, key]);
+  }, [history, key, theme]);
 
   // Display precision, from the pair's quoted increments. Applied only once
   // metadata is known: inventing a precision before then would be wrong for
@@ -311,10 +309,10 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
   );
 }
 
-function toVolumePoint(candle: Candle) {
+function toVolumePoint(candle: Candle, palette: ChartPalette) {
   return {
     time: candle.time as UTCTimestamp,
     value: candle.volume,
-    color: candle.close >= candle.open ? CHART_VOLUME_COLORS.up : CHART_VOLUME_COLORS.down,
+    color: candle.close >= candle.open ? palette.volumeUp : palette.volumeDown,
   };
 }

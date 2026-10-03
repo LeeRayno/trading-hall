@@ -3,13 +3,25 @@
 /*
  * Trading hall theme.
  *
- * Deliberately dark-only: this is a data-dense market view, and a light
- * variant is a separate design decision rather than an automatic inversion.
- * Every colour is a token so a light theme can be added later by redefining
- * the block below, without touching component markup.
+ * Two palettes, selected by a `data-theme` attribute on the document element,
+ * which an inline script sets before the first paint. Keeping the choice on the
+ * element rather than in a class means a component that has to know the theme
+ * can read one attribute instead of subscribing to anything.
+ *
+ * `dark:` is re-pointed at that attribute here. Tailwind's default definition
+ * asks the operating system, which is the wrong question now: a user whose
+ * machine is set to light but who picked dark here wants the dark answer, and
+ * only the attribute knows that. Nothing in this project used `dark:` before
+ * this line, so no existing style changed meaning.
  */
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
+  /* Also the fallback: with no attribute yet — no script, or a cold cache —
+     this is what the page wears. */
+  color-scheme: dark;
+
   --th-background: #0b0e11;
   --th-panel: #12161c;
   --th-panel-hover: #1a2029;
@@ -25,6 +37,37 @@
   /* Direction colours, used for both book sides and trade prints. */
   --th-up: #0ecb81;
   --th-down: #f6465d;
+}
+
+/*
+ * Light palette.
+ *
+ * Every value here was chosen against a contrast ratio rather than by
+ * inverting the block above, because the relationships that carry meaning do
+ * not invert on their own. Panels stay lighter than the page, as they are in
+ * the dark theme, so the same depth cue survives the switch. The direction
+ * colours and the gold both had to be darkened a long way: `#0ecb81` and
+ * `#f0b90b` are legible on near-black precisely because they are bright, and
+ * on white they are the two least readable colours available.
+ */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --th-background: #f5f6f8;
+  --th-panel: #ffffff;
+  --th-panel-hover: #eef0f3;
+  --th-border-subtle: #dfe3e8;
+
+  --th-foreground: #12161c; /* 18.15:1 on the page colour */
+  --th-text-secondary: #4a5461; /* 7.69:1 */
+  --th-text-muted: #6b7683; /* 4.62:1 — the dark theme's instance of this
+                               token measures 4.19:1, just under AA */
+
+  --th-accent: #96620a; /* 5.19:1 on white, 4.50:1 on the chip below */
+  --th-accent-subtle: #fbeecd;
+
+  --th-up: #0a7d4f; /* 5.17:1 */
+  --th-down: #c62a41; /* 5.51:1 */
 }
 
 @theme inline {
@@ -59,10 +102,6 @@
       transform: translateX(-50%);
     }
   }
-}
-
-html {
-  color-scheme: dark;
 }
 
 body {

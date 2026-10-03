@@ -17,6 +17,7 @@
 import { memo, useState } from 'react';
 
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { ChartAttribution } from '@/components/trading/Chart/ChartAttribution';
 import { TimeframeSelector } from '@/components/trading/Chart/TimeframeSelector';
 import { TradingChart } from '@/components/trading/Chart/TradingChart';
@@ -45,7 +46,13 @@ function TradingHallComponent({ symbol }: TradingHallProps) {
         <div className="flex items-center gap-4">
           <SymbolSwitcher symbol={symbol} />
         </div>
-        <LanguageSwitcher />
+        {/* One child on the right, not two: `justify-between` spreads its
+            children, so a second sibling here would sit in the middle of the
+            header rather than against the edge. */}
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* A fixed-height band between the header and the modules: it is the only

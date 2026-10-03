@@ -8,6 +8,10 @@
     "retry": "重试",
     "language": "语言"
   },
+  "theme": {
+    "toLight": "切换到亮色主题",
+    "toDark": "切换到暗色主题"
+  },
   "trade": {
     "chart": "K线",
     "orderBook": "订单簿",

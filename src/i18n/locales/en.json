@@ -8,6 +8,10 @@
     "retry": "Retry",
     "language": "Language"
   },
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
+  },
   "trade": {
     "chart": "Chart",
     "orderBook": "Order Book",
