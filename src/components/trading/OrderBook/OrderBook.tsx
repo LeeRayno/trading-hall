@@ -19,6 +19,7 @@
 
 import { memo } from 'react';
 
+import { Spinner } from '@/components/common/Spinner';
 import { PanelNotice } from '@/components/trading/PanelNotice';
 import { canRetry, describeFailure } from '@/components/trading/failure';
 import { useOrderBook } from '@/hooks/useOrderBook';
@@ -85,7 +86,7 @@ export function OrderBook({ symbol }: OrderBookProps) {
 
     return (
       <div className="flex h-full items-center justify-center p-4">
-        <span className="text-sm text-text-muted">{t('common.loading')}</span>
+        <Spinner />
       </div>
     );
   }

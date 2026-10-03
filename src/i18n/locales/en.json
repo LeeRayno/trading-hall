@@ -26,6 +26,9 @@
     "total": "Total",
     "volume": "Volume",
     "timeframe": "Timeframe",
+    "hot": "Hot",
+    "hotCollapse": "Collapse hot pairs",
+    "hotExpand": "Expand hot pairs",
     "timeframes": {
       "1m": "1 minute",
       "3m": "3 minutes",

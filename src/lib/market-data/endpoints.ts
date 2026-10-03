@@ -28,6 +28,13 @@ export const REST_PATHS = {
   recentTrades: '/v1/market/histories',
   /** Trading rules and precision per pair. */
   symbols: '/v2/symbols',
+  /**
+   * 24h statistics for every listed pair in one response. The only endpoint
+   * that can answer "which pairs are busiest" without a request per pair, so
+   * it is what the hot list is ranked from — at the cost of a large body,
+   * which is why it is read once rather than on a timer.
+   */
+  allTickers: '/v1/market/allTickers',
 } as const;
 
 export type RestPathKey = keyof typeof REST_PATHS;
@@ -46,7 +53,19 @@ export const PROXY_ROUTES: Readonly<Record<string, readonly string[]>> = {
   [REST_PATHS.orderBookFull]: ['GET'],
   [REST_PATHS.recentTrades]: ['GET'],
   [REST_PATHS.symbols]: ['GET'],
+  [REST_PATHS.allTickers]: ['GET'],
 };
+
+/**
+ * Routes whose response is large enough that the proxy's default deadline is
+ * the wrong one for them.
+ *
+ * Named here rather than inferred from the response, because the deadline has
+ * to be chosen before the response exists. Kept as a set of routes rather than
+ * a flag on each entry above so the two structures stay readable: this is the
+ * exception list, and it should be short.
+ */
+export const PROXY_SLOW_ROUTES: ReadonlySet<string> = new Set([REST_PATHS.allTickers]);
 
 /** Maximum bars one candle request may return upstream. */
 export const CANDLE_PAGE_LIMIT = 1500;
@@ -114,6 +133,16 @@ export const WS_TOPICS = {
     `/market/candles:${symbol}_${toWireInterval(timeframe)}`,
   orderBook: (symbol: Symbol): string => `/market/level2:${symbol}`,
   trades: (symbol: Symbol): string => `/market/match:${symbol}`,
+  /**
+   * Per-pair quote, pushed about every two seconds.
+   *
+   * One symbol per topic, deliberately. The gateway also accepts a
+   * comma-joined list, but it answers such a subscription with a frame per
+   * symbol carrying the *single*-symbol topic — and the transport dispatches
+   * on an exact topic match, so a handler registered under the joined string
+   * would silently never be called. See `subscribeSnapshots`.
+   */
+  snapshot: (symbol: Symbol): string => `/market/snapshot:${symbol}`,
 } as const;
 
 /**
@@ -125,4 +154,5 @@ export const WS_SUBJECTS = {
   candles: 'trade.candles.update',
   orderBook: 'trade.l2update',
   trades: 'trade.l3match',
+  snapshot: 'trade.snapshot',
 } as const;

@@ -26,6 +26,9 @@
     "total": "总计",
     "volume": "成交量",
     "timeframe": "周期",
+    "hot": "热门",
+    "hotCollapse": "收起热门币种",
+    "hotExpand": "展开热门币种",
     "timeframes": {
       "1m": "1分钟",
       "3m": "3分钟",

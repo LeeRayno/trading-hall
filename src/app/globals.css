@@ -42,6 +42,23 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /*
+   * The hot strip's scroll.
+   *
+   * The track holds the pairs twice and travels exactly half its own width, so
+   * the second copy lands where the first began and the loop has no seam. The
+   * duration is fixed rather than derived from how many pairs were ranked: a
+   * strip that sped up on a busy day would read as the page misbehaving.
+   * Components stop it with `motion-reduce:animate-none` and pause it on hover.
+   */
+  --animate-marquee: marquee 40s linear infinite;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 html {

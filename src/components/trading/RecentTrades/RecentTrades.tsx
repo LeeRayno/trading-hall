@@ -12,6 +12,7 @@
 
 import { memo, useCallback, useMemo } from 'react';
 
+import { Spinner } from '@/components/common/Spinner';
 import { PanelNotice } from '@/components/trading/PanelNotice';
 import { canRetry, describeFailure } from '@/components/trading/failure';
 import { useRecentTrades } from '@/hooks/useRecentTrades';
@@ -25,7 +26,7 @@ interface RecentTradesProps {
 }
 
 /** Shared by the header and the rows, so the columns cannot drift apart. */
-const ROW_GRID = 'grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2 px-3';
+const ROW_GRID = 'grid grid-cols-3 items-center gap-2 px-3';
 
 export function RecentTrades({ symbol }: RecentTradesProps) {
   const { t, locale } = useI18n();
@@ -94,7 +95,9 @@ export function RecentTrades({ symbol }: RecentTradesProps) {
         ))}
 
         {status === 'loading' && trades.length === 0 ? (
-          <p className="px-3 py-2 text-text-muted">{t('common.loading')}</p>
+          <div className="flex h-full items-center justify-center p-4">
+            <Spinner />
+          </div>
         ) : null}
 
         {status === 'ready' && trades.length === 0 ? (

@@ -10,8 +10,10 @@
  * replacing the upstream means rewriting those and nothing else.
  */
 
+import { BULK_REQUEST_TIMEOUT_MS } from '../../config/api';
 import { HttpError, type HttpClient, type RequestOptions } from '../http/service';
 import {
+  adaptAllTickers,
   adaptCandles,
   adaptOrderBookSnapshot,
   adaptPublicToken,
@@ -36,6 +38,7 @@ import type {
   RecentTrade,
   Symbol,
   SymbolInfo,
+  Ticker,
 } from './types';
 
 /**
@@ -131,6 +134,25 @@ export async function getRecentTrades(
     context: 'recentTrades',
   });
   return adaptRecentTrades(data);
+}
+
+/**
+ * 24-hour statistics for every listed pair.
+ *
+ * One request for the whole market, and a large response — it is read to rank
+ * pairs, once, rather than to follow prices.
+ */
+export async function getTickers(http: HttpClient, signal?: AbortSignal): Promise<Ticker[]> {
+  const data = await call(http, {
+    method: 'GET',
+    path: REST_PATHS.allTickers,
+    signal,
+    // The only request here whose response is measured in hundreds of KB, and
+    // the only one that gets a deadline sized for that.
+    timeoutMs: BULK_REQUEST_TIMEOUT_MS,
+    context: 'allTickers',
+  });
+  return adaptAllTickers(data);
 }
 
 /** Trading rules and precision for every listed pair. */

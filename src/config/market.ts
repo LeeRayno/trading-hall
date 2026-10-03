@@ -46,3 +46,23 @@ export const ORDER_BOOK_MAX_RESYNC_ATTEMPTS = 5;
 
 /** Maximum rows kept in the trade tape. */
 export const MAX_RECENT_TRADES = 100;
+
+/**
+ * Pairs shown in the hot strip.
+ *
+ * Ten fills a wide screen with enough left over to scroll, and it is ten live
+ * subscriptions rather than the hundreds a whole-market one would cost: the
+ * ranking is the only thing read market-wide, and it is read once.
+ */
+export const HOT_SYMBOLS_LIMIT = 10;
+
+/**
+ * How often the hot strip's quotes are published to React, in ms.
+ *
+ * The strip has ten independent sources pushing about every two seconds, so
+ * this is not the book's throttle — nothing here is fast enough to need one.
+ * It is a coalescing window: quotes that land together become one render
+ * instead of ten, and half a second is far below the time it takes to read a
+ * price, so nothing is seen late.
+ */
+export const HOT_SYMBOLS_FLUSH_INTERVAL_MS = 500;

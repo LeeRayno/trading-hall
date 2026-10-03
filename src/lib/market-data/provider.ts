@@ -22,6 +22,8 @@ import type {
   RecentTrade,
   Symbol,
   SymbolInfo,
+  SymbolSnapshot,
+  Ticker,
   Timeframe,
   Unsubscribe,
 } from './types';
@@ -42,6 +44,17 @@ export class MarketDataProvider {
 
   /** Cancels the shared metadata request. Owned here, not by a caller. */
   private symbolsController: AbortController | null = null;
+
+  /**
+   * The whole-market ticker snapshot, shared for the same reason as the pair
+   * metadata and one more: it is the largest response in the application, and
+   * it is read to rank pairs — a ranking that is deliberately fixed for the
+   * session — so a second copy of it buys nothing.
+   */
+  private tickersPromise: Promise<Ticker[]> | null = null;
+
+  /** Cancels the shared ticker request. Owned here, not by a caller. */
+  private tickersController: AbortController | null = null;
 
   constructor(options: MarketDataProviderOptions = {}) {
     this.client = options.client ?? new MarketDataClient(options.clientOptions);
@@ -76,6 +89,29 @@ export class MarketDataProvider {
     return this.client.getRecentTrades(requireSymbol(symbol), signal);
   }
 
+  /**
+   * 24-hour statistics for every listed pair, for ranking.
+   *
+   * Fetched at most once per provider instance, and shared by concurrent
+   * callers rather than per caller: two components mounting together would
+   * otherwise each pull half a megabyte down for an answer they would agree on.
+   * The caller's signal decides how long *that caller* waits, exactly as with
+   * the pair metadata above.
+   */
+  async getTickers(signal?: AbortSignal): Promise<Ticker[]> {
+    if (!this.tickersPromise) {
+      this.tickersController = new AbortController();
+      this.tickersPromise = this.client
+        .getTickers(this.tickersController.signal)
+        .catch((error: unknown) => {
+          // Do not cache a failure; the retry button should really retry.
+          this.tickersPromise = null;
+          throw error;
+        });
+    }
+    return signal ? untilAborted(this.tickersPromise, signal) : this.tickersPromise;
+  }
+
   // ==================== Live streams ====================
 
   subscribeCandles(
@@ -95,6 +131,14 @@ export class MarketDataProvider {
 
   subscribeTrades(symbol: Symbol, handler: (trade: RecentTrade) => void): Unsubscribe {
     return this.websocket.subscribeTrades(requireSymbol(symbol), handler);
+  }
+
+  /** Live quotes for a set of pairs, on one subscription per pair. */
+  subscribeSnapshots(
+    symbols: readonly Symbol[],
+    handler: (snapshot: SymbolSnapshot) => void,
+  ): Unsubscribe {
+    return this.websocket.subscribeSnapshots(symbols.map(requireSymbol), handler);
   }
 
   onConnectionStateChange(listener: Parameters<MarketDataWebSocket['onConnectionStateChange']>[0]) {
@@ -147,6 +191,11 @@ export class MarketDataProvider {
     this.symbolsController?.abort();
     this.symbolsController = null;
     this.symbolsPromise = null;
+
+    this.tickersPromise?.catch(() => {});
+    this.tickersController?.abort();
+    this.tickersController = null;
+    this.tickersPromise = null;
   }
 }
 

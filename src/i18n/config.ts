@@ -2,8 +2,8 @@
  * Locale registry.
  *
  * Adding a language means adding it here and dropping a matching JSON file
- * next to the others. No component ever branches on a locale string, so
- * nothing else has to change.
+ * into `locales/`. No component ever branches on a locale string, so nothing
+ * else has to change.
  */
 
 export const LOCALES = ['zh-CN', 'en'] as const;

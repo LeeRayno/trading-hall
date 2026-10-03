@@ -27,6 +27,7 @@ import {
 } from 'lightweight-charts';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { Spinner } from '@/components/common/Spinner';
 import { PanelNotice } from '@/components/trading/PanelNotice';
 import { canRetry, describeFailure } from '@/components/trading/failure';
 import { CHART_COLORS, CHART_LAYOUT, CHART_VOLUME_COLORS } from '@/config/chart';
@@ -276,7 +277,13 @@ export function TradingChart({ symbol, timeframe }: TradingChartProps) {
       <div ref={containerRef} className="h-full w-full" />
 
       {status === 'loading' && history === null ? (
-        <PanelNotice>{t('common.loading')}</PanelNotice>
+        <PanelNotice>
+          {/* The same size the panels use. It was tried smaller, to match the
+              pill's text, and at that size the ring thins out to a hairline
+              that reads as a smudge on the notice rather than as work in
+              progress. */}
+          <Spinner />
+        </PanelNotice>
       ) : null}
 
       {showErrorPanel ? (

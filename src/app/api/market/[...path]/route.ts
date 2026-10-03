@@ -14,8 +14,12 @@
 
 import { NextResponse } from 'next/server';
 
-import { UPSTREAM_API_PREFIX, getUpstreamBaseUrl } from '@/config/api';
-import { PROXY_ROUTES } from '@/lib/market-data/endpoints';
+import {
+  BULK_UPSTREAM_TIMEOUT_MS,
+  UPSTREAM_API_PREFIX,
+  getUpstreamBaseUrl,
+} from '@/config/api';
+import { PROXY_ROUTES, PROXY_SLOW_ROUTES } from '@/lib/market-data/endpoints';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -50,11 +54,19 @@ async function forward(request: Request, context: RouteContext): Promise<Respons
   // Copy the query verbatim; the client is responsible for valid parameters.
   target.search = incoming.search;
 
+  // A route with a large response needs longer than the default, and the
+  // deadline has to be raised here as well as at the client: this hop is the
+  // one that actually waits, and its timeout surfaces as a 502 that the client
+  // cannot tell apart from a genuinely unreachable upstream.
+  const timeoutMs = PROXY_SLOW_ROUTES.has(upstreamPath)
+    ? BULK_UPSTREAM_TIMEOUT_MS
+    : UPSTREAM_TIMEOUT_MS;
+
   try {
     const upstream = await fetch(target, {
       method,
       headers: { accept: 'application/json' },
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     });
 

@@ -22,6 +22,7 @@ import type {
   RecentTrade,
   Symbol,
   SymbolInfo,
+  Ticker,
 } from './types';
 
 export interface MarketDataClientOptions {
@@ -73,5 +74,9 @@ export class MarketDataClient {
 
   getSymbols(signal?: AbortSignal): Promise<SymbolInfo[]> {
     return trading.getSymbols(this.http, signal);
+  }
+
+  getTickers(signal?: AbortSignal): Promise<Ticker[]> {
+    return trading.getTickers(this.http, signal);
   }
 }

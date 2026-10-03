@@ -27,7 +27,10 @@ import type {
   OrderBookLevel,
   OrderBookUpdate,
   RecentTrade,
+  Symbol,
   SymbolInfo,
+  SymbolSnapshot,
+  Ticker,
 } from '../types';
 import type { RawSymbol } from './raw';
 
@@ -284,6 +287,92 @@ export function adaptRecentTrades(raw: unknown): RecentTrade[] {
 /** Adapt a single trade push. */
 export function adaptTradeMessage(payload: unknown): RecentTrade | null {
   return parseTradeRow(payload);
+}
+
+// ==================== Tickers and quotes ====================
+
+/**
+ * Adapt the whole-market 24-hour statistics payload.
+ *
+ * The payload is an object carrying a `ticker` array, not the array itself
+ * (unlike the trade history). Rows missing any field the ranking depends on
+ * are dropped rather than defaulted: a pair whose volume is unknown would
+ * otherwise sort as though it had none, or worse, as though it had the most.
+ */
+export function adaptAllTickers(raw: unknown): Ticker[] {
+  const body = asRecord(raw);
+  const rows = body ? asArray(body.ticker) : null;
+  if (!rows) return [];
+
+  const adapted: Ticker[] = [];
+  for (const row of rows) {
+    const ticker = adaptTickerRow(row);
+    if (ticker) adapted.push(ticker);
+  }
+  return adapted;
+}
+
+function adaptTickerRow(raw: unknown): Ticker | null {
+  const record = asRecord(raw);
+  if (!record) return null;
+
+  const symbol = record.symbol;
+  const price = toFiniteNumber(record.last);
+  const open = toFiniteNumber(record.open);
+  const changeRate = toFiniteNumber(record.changeRate);
+  // Quote volume, i.e. traded value in the quote currency, not the base amount
+  // traded. Pairs are ranked against each other, and "500 BTC" and "500 SAND"
+  // are not comparable while "500 USDT" is.
+  const quoteVolume = toFiniteNumber(record.volValue);
+
+  if (
+    !isNonEmptyString(symbol) ||
+    price === null ||
+    open === null ||
+    changeRate === null ||
+    quoteVolume === null
+  ) {
+    return null;
+  }
+
+  return { symbol, price, open, changeRate, quoteVolume };
+}
+
+/**
+ * Adapt a per-pair quote push.
+ *
+ * Two things set this feed apart from every other one here, and both fail
+ * quietly if assumed away:
+ *
+ *   - The payload is nested a level deeper than the rest. The fields live
+ *     under `payload.data`, not on the payload, so reading them off the top
+ *     level returns `null` for every single frame — which is indistinguishable
+ *     from a market that has simply gone quiet.
+ *   - The frame names its own pair, and that name is checked rather than
+ *     trusted. The fields around it are a trap for the eye: `baseCurrency` is
+ *     the base only, and `market` says `USDS` for the market this app calls
+ *     USDT. `symbol` is the field that means what the app means by it.
+ *
+ * The symbol is passed in because the subscription is what decided which pair
+ * this frame is for, and the two should agree. A frame that names a different
+ * pair than it was subscribed to is a misroute, and reporting it under the
+ * subscribed name would put another pair's price on this row — so it is
+ * dropped. A frame that names no pair at all still counts as this pair's.
+ */
+export function adaptSnapshotMessage(symbol: Symbol, payload: unknown): SymbolSnapshot | null {
+  const frame = asRecord(payload);
+  const record = frame ? asRecord(frame.data) : null;
+  if (!record) return null;
+
+  if (isNonEmptyString(record.symbol) && record.symbol !== symbol) return null;
+
+  const price = toFiniteNumber(record.lastTradedPrice);
+  const changeRate = toFiniteNumber(record.changeRate);
+  const timestamp = toFiniteNumber(record.datetime);
+
+  if (price === null || price <= 0 || changeRate === null || timestamp === null) return null;
+
+  return { symbol, price, changeRate, timestamp };
 }
 
 // ==================== Symbols ====================

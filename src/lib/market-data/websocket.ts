@@ -20,6 +20,7 @@ import type { WSFrame } from '../ws/protocol';
 import {
   adaptCandleMessage,
   adaptOrderBookMessage,
+  adaptSnapshotMessage,
   adaptTradeMessage,
 } from './adapters/marketDataAdapter';
 import type { MarketDataClient } from './client';
@@ -31,6 +32,7 @@ import type {
   OrderBookUpdate,
   RecentTrade,
   Symbol,
+  SymbolSnapshot,
   Timeframe,
   Unsubscribe,
 } from './types';
@@ -161,6 +163,41 @@ export class MarketDataWebSocket {
       const trade = adaptTradeMessage(payload);
       if (trade) handler(trade);
     });
+  }
+
+  /**
+   * Live quotes for several pairs.
+   *
+   * One subscription per pair, rather than one subscription to a comma-joined
+   * topic. The gateway accepts the joined form, but answers it with a frame
+   * per pair carrying that pair's own topic — and the transport dispatches on
+   * an exact topic match, so a handler registered under the joined string
+   * would never be called and the frames would be dropped without a word.
+   *
+   * Per-pair topics also fit the transport's refcounting as it stands: the
+   * subscribe frame goes out when a topic goes from unused to used, the
+   * unsubscribe when the last consumer detaches, and a reconnect replays every
+   * topic verbatim. Sharing a pair's subscription with another module later
+   * therefore costs nothing. A "topic family" match would instead deliver an
+   * overlapping pair twice when two modules want overlapping sets.
+   *
+   * The symbol is bound per subscription because the frames do not carry one;
+   * see `adaptSnapshotMessage`.
+   */
+  public subscribeSnapshots(
+    symbols: readonly Symbol[],
+    handler: (snapshot: SymbolSnapshot) => void,
+  ): Unsubscribe {
+    const unsubscribes = symbols.map((symbol) =>
+      this.subscribe(WS_TOPICS.snapshot(symbol), (payload) => {
+        const snapshot = adaptSnapshotMessage(symbol, payload);
+        if (snapshot) handler(snapshot);
+      }),
+    );
+
+    return () => {
+      for (const unsubscribe of unsubscribes) unsubscribe();
+    };
   }
 
   // ==================== Internals ====================

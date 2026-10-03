@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    The hall's mark: three ascending candlesticks, in the accent gold, on the
+    panel colour.
+
+    Candlesticks because they are the one glyph that says "market" before the
+    page has loaded a single number, and the tiled square is what an app icon
+    is these days. The sizes step up left to right so the mark carries a
+    direction rather than being a chart at rest.
+
+    Everything is sized for the tab strip, where this is drawn at sixteen
+    pixels: three bodies, three wicks, and nothing else. The gaps are wider
+    than they look right at large sizes because at sixteen the bodies merge
+    into one blob without them, and the wicks are thick enough to survive the
+    same reduction. The tile keeps the gold legible on a light tab bar as well
+    as a dark one, which is why the mark is not just gold on transparency.
+
+    Colours are the theme tokens, written out because an SVG served as an
+    image cannot read CSS variables.
+  -->
+  <rect width="32" height="32" rx="7" fill="#12161c"/>
+  <rect x="0.6" y="0.6" width="30.8" height="30.8" rx="6.4" fill="none" stroke="#f0b90b" stroke-opacity="0.22" stroke-width="1.2"/>
+  <rect x="7.4" y="15.2" width="1.8" height="11" rx="0.9" fill="#f0b90b"/>
+  <rect x="6" y="18" width="4.6" height="6" rx="1.4" fill="#f0b90b"/>
+  <rect x="15.1" y="10.7" width="1.8" height="15.5" rx="0.9" fill="#f0b90b"/>
+  <rect x="13.7" y="13.5" width="4.6" height="10.5" rx="1.4" fill="#f0b90b"/>
+  <rect x="22.8" y="5.7" width="1.8" height="20.5" rx="0.9" fill="#f0b90b"/>
+  <rect x="21.4" y="8.5" width="4.6" height="15.5" rx="1.4" fill="#f0b90b"/>
+</svg>

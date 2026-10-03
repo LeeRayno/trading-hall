@@ -55,3 +55,28 @@ export const API_BASE_URL = configuredClientBase
 
 /** Per-request deadline. */
 export const REQUEST_TIMEOUT_MS = 10_000;
+
+/**
+ * Deadlines for the whole-market request, at each end of the proxy hop.
+ *
+ * The 24-hour statistics for every listed pair measure about 480KB, against a
+ * few KB for a candle page, and the shared 10s deadline leaves them no margin:
+ * measured end to end at 4.7s, 6.1s and 7.3s on three consecutive calls over a
+ * local connection, which is close enough that it failed outright during
+ * testing. A deadline that trips on a healthy request is a bug of its own — the
+ * user sees a load failure for a request that would have succeeded.
+ *
+ * Both ends need the larger budget, and they cannot be the same number. The
+ * proxy is the one that talks to the upstream, so its deadline has to be the
+ * shorter of the two: when the request really is stuck, the proxy can answer
+ * with a failure that says so, which is more use than the client giving up a
+ * moment later on a request that was already dead.
+ *
+ * The extra budget is for the size of the response rather than for a slow
+ * upstream, so it buys transfer time without hiding an unresponsive server
+ * behind a long wait.
+ */
+export const BULK_REQUEST_TIMEOUT_MS = 30_000;
+
+/** The upstream hop's deadline for that same request. See above. */
+export const BULK_UPSTREAM_TIMEOUT_MS = 25_000;

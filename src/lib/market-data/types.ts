@@ -94,6 +94,41 @@ export interface SymbolInfo {
   enableTrading: boolean;
 }
 
+/**
+ * 24-hour statistics for one pair, as the market list reports them.
+ *
+ * Used to rank pairs rather than to display a live price: it is a whole-market
+ * snapshot, so it is read once and is stale by the time it arrives.
+ */
+export interface Ticker {
+  symbol: Symbol;
+  /** Last traded price. */
+  price: number;
+  /** Price 24 hours ago; the baseline the change is measured against. */
+  open: number;
+  /** Fraction, not percent: `-0.0202` is a 2.02% fall. */
+  changeRate: number;
+  /** Traded value over 24h in quote currency, e.g. USDT. */
+  quoteVolume: number;
+}
+
+/**
+ * A live per-pair quote, as the snapshot feed pushes it.
+ *
+ * Unlike the ticker above, the change rate here is the provider's own and is
+ * not derived: the feed carries it alongside the price, so a displayed
+ * percentage is never a locally computed approximation of one.
+ */
+export interface SymbolSnapshot {
+  symbol: Symbol;
+  /** Last traded price. */
+  price: number;
+  /** Fraction, not percent: `-0.0202` is a 2.02% fall. */
+  changeRate: number;
+  /** Quote time, Unix **milliseconds**. */
+  timestamp: number;
+}
+
 /** Coarse connection state exposed to the UI. */
 export const ConnectionState = {
   IDLE: 'idle',

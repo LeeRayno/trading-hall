@@ -20,6 +20,7 @@ import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { ChartAttribution } from '@/components/trading/Chart/ChartAttribution';
 import { TimeframeSelector } from '@/components/trading/Chart/TimeframeSelector';
 import { TradingChart } from '@/components/trading/Chart/TradingChart';
+import { HotSymbols } from '@/components/trading/HotSymbols/HotSymbols';
 import { OrderBook } from '@/components/trading/OrderBook/OrderBook';
 import { Orders } from '@/components/trading/Placeholder/Orders';
 import { Position } from '@/components/trading/Placeholder/Position';
@@ -47,6 +48,12 @@ function TradingHallComponent({ symbol }: TradingHallProps) {
         <LanguageSwitcher />
       </header>
 
+      {/* A fixed-height band between the header and the modules: it is the only
+          part of the hall that is decoration as much as data, and holding its
+          height means the workspace below does not shift when the ranking
+          lands, or when the strip is collapsed. */}
+      <HotSymbols />
+
       {/* `lg:min-h-110` is 440px: the book's 320px plus a floor of 120px for the
           tape, which is about as short as the tape is still readable at. The
           hall is a definite viewport height on lg, so without this floor a
@@ -54,7 +61,7 @@ function TradingHallComponent({ symbol }: TradingHallProps) {
           at 500px tall it measured 2px. With it, the grid stops shrinking at
           440 and the page scrolls instead, which is what it did before the
           column was made to fill. */}
-      <div className="grid flex-1 grid-cols-1 gap-px bg-border-subtle lg:min-h-110 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid flex-1 grid-cols-1 bg-border-subtle lg:min-h-110 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="bg-background p-2">
           <Panel
             title={t('trade.chart')}
